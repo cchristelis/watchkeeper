@@ -50,24 +50,29 @@ class AssessmentForm(forms.Form):
         name = self.cleaned_data.get('name')
         latitude = self.cleaned_data.get('latitude')
         longitude = self.cleaned_data.get('longitude')
+
         geom = Point(
             float(latitude), float(longitude)
         )
         # find the healthsite
         try:
             healthsite = Healthsite.objects.get(name=name, point_geometry=geom)
-            self.create_event(healthsite)
+            self.create_assessment(healthsite)
         except Healthsite.DoesNotExist:
             # generate new uuid
             tmp_uuid = uuid.uuid4().hex
             healthsite = Healthsite(name=name, point_geometry=geom, uuid=tmp_uuid, version=1)
             healthsite.save()
             # regenerate_cache.delay()
-            self.create_event(healthsite)
+            self.create_assessment(healthsite)
 
-    def create_event(self, healthsite):
-        # make new event
-        pass
+    def create_assessment(self, healthsite):
+        if 'update_button' in self.data:
+            healthsite_assesment = HealthsiteAssessment.objects.filter(healthsite=healthsite)
+        elif 'add_button' in self.data:
+            healthsite_assesment = HealthsiteAssessment(healthsite=healthsite)
+
+        healthsite_assesment
     
     def groups(self):
         groups = [Group('General', self)]
@@ -76,5 +81,3 @@ class AssessmentForm(forms.Form):
             group = Group(assessment_group.name, group_form)
             groups.append(group)
         return groups
-
-
