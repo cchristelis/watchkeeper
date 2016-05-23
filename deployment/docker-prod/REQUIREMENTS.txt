@@ -8,7 +8,8 @@ nodeenv
 raven
 django-forms-bootstrap
 # Django rest framework support
-djangorestframework==2.4.4
+djangorestframework==3.0
+djangorestframework-gis
 markdown
 django-filter
 Pillow

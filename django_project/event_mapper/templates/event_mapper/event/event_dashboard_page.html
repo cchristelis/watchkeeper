@@ -33,7 +33,8 @@
             $('#nav_home').addClass("active");
             dateFormat = d3.time.format('%d-%m-%Y, %H:%M');
             map.on('moveend', function (e) {
-                get_healthsites_markers();
+                get_healthsite_markers();
+                get_healthsite_assessment_markers();
                 get_event_markers();
             });
 
@@ -42,7 +43,8 @@
             });
             markers_control = new L.Control.Command().addTo(map);
 
-            get_healthsites_markers();
+            get_healthsite_markers();
+            get_healthsite_assessment_markers();
             get_event_markers();
 
             // fill the number of healthsites

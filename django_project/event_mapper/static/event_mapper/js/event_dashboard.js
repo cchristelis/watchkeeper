@@ -747,7 +747,7 @@ function graph_filters(graph) {
 // --------------------------------------------------------------------
 var healthsite_marker_url = '/static/images/healthsite-marker.png';
 var healthsites_markers = [];
-function get_healthsites_markers() {
+function get_healthsite_markers() {
     // get boundary
     var bbox = map.getBounds().toBBoxString();
     $.ajax({
@@ -789,6 +789,126 @@ function get_healthsites_markers() {
         }
     })
 }
+// --------------------------------------------------------------------
+// HEALTHSITE ASSESSMENTS
+// --------------------------------------------------------------------
+var healthsite_assessment_markers = [];
+function get_healthsite_assessment_markers() {
+    // get boundary
+    var map_boundaries = map.getBounds();
+    var west = map_boundaries.getWest();
+    var east = map_boundaries.getEast();
+    var north = wrap_number(map_boundaries.getNorth(), -90, 90);
+    var south = wrap_number(map_boundaries.getSouth(), -90, 90);
+    // To handle if the use zoom out, until the lng >180 or < -180
+    if (west < -180) {
+        west = -180;
+    }
+    if (east > 180) {
+        east = 180;
+    }
+    var bbox = {
+        'ne_lat': north,
+        'ne_lng': east,
+        'sw_lat': south,
+        'sw_lng': west
+    };
+
+    // get time
+    bbox = JSON.stringify(bbox);
+    $.ajax({
+        type: 'POST',
+        url: '/healthsites/assessments',
+        data: {
+            bbox: bbox,
+        },
+        dataType: 'json',
+        success: function (json) {
+            clear_event_markers();
+            // resetting data
+            by_overall_assessment = {};
+            all_data = [];
+            all_data.push({
+                "overal": 1,
+                "type": "",
+                "data_captor": "",
+                "month": 0,
+                "number": 0
+            });
+            all_data.push({
+                "overal": 2,
+                "type": "",
+                "data_captor": "",
+                "month": 0,
+                "number": 0
+            });
+            all_data.push({
+                "overal": 3,
+                "type": "",
+                "data_captor": "",
+                "month": 0,
+                "number": 0
+            });
+            all_data.push({
+                "overal": 4,
+                "type": "",
+                "data_captor": "",
+                "month": 0,
+                "number": 0
+            });
+            all_data.push({
+                "overal": 5,
+                "type": "",
+                "data_captor": "",
+                "month": 0,
+                "number": 0
+            });
+            var num_incident = 0;
+            var num_advisory = 0;
+            var assessments = json['assessments']['features'];
+            var rendered_count = 0;
+            var min_value = new Date();
+            var max_value = 0;
+            for (var i = 0; i < assessments.length; i++) {
+                var rendered_marker = add_event_marker(assessments[i]);
+                // checking other properties
+                if (assessments[i]['properties']['category'] == INCIDENT_CODE) {
+                    num_incident++;
+                } else if (assessments[i]['properties']['category'] == ADVISORY_CODE) {
+                    num_advisory++;
+                }
+                if (rendered_marker) {
+                    var marker_date = new Date(dateFormat.parse(rendered_marker.data.event_date_time));
+                    min_value = Math.min(min_value, marker_date);
+                    max_value = Math.max(max_value, marker_date);
+                    rendered_count += 1;
+                }
+            }
+            var default_range = time_range[1] - time_range[0];
+            if (max_value - min_value < default_range) {
+                var new_range = default_range - (max_value - min_value);
+                max_value = max_value + new_range / 2;
+                min_value = min_value - new_range / 2;
+            }
+            var start_date = new Date(min_value);
+            var end_date = new Date(max_value);
+            if (timeline_chart) {
+                timeline_chart.x(d3.time.scale().domain([start_date, end_date])).round(d3.time.month.round)
+                    .xUnits(d3.time.months);
+                timeline_chart.render();
+            } else {
+                time_range = [start_date, end_date];
+            }
+            $('#num_events').text(rendered_count);
+            render_statistic();
+        },
+        errors: function () {
+            console.log('Ajax failed');
+        }
+    })
+}
+
+
 function render_healthsite_marker(latlng, myIcon, data) {
     var mrk = new L.Marker(latlng, {
         icon: myIcon,

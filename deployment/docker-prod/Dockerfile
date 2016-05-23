@@ -13,10 +13,11 @@ ADD 71-apt-cacher-ng /etc/apt/apt.conf.d/71-apt-cacher-ng
 
 RUN pip install --upgrade pip
 ADD REQUIREMENTS.txt /REQUIREMENTS.txt
-RUN pip install -r /REQUIREMENTS.txt
-RUN pip install uwsgi
 
 RUN apt-get update -y; apt-get -y --force-yes install yui-compressor
+
+RUN pip install -r /REQUIREMENTS.txt
+RUN pip install uwsgi
 
 # Open port 8080 as we will be running our uwsgi socket on that
 EXPOSE 8080
